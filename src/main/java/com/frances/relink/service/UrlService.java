@@ -20,7 +20,7 @@ public class UrlService {
 
     public UrlService(UrlRepository urlRepository) {
         this.urlRepository = urlRepository;
-        this.baseUrl = "http://re.link/";
+        this.baseUrl = "http://localhost:8080/re.link/";
         this.salt = "salt";
     }
 
