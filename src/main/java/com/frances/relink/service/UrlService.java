@@ -1,13 +1,16 @@
 package com.frances.relink.service;
 
 import com.frances.relink.data.UrlRepository;
+import com.frances.relink.exception.LongUrlDoesNotExistsException;
 import com.frances.relink.exception.ShortenLinkExistsException;
 import com.frances.relink.models.Url;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 @Service
 public class UrlService {
@@ -17,7 +20,7 @@ public class UrlService {
 
     public UrlService(UrlRepository urlRepository) {
         this.urlRepository = urlRepository;
-        this.baseUrl = "http://re.link/";
+        this.baseUrl = "http://localhost:8080/re.link/";
         this.salt = "salt";
     }
 
@@ -42,17 +45,21 @@ public class UrlService {
     }
 
     public Url saveUrl(Url url, String key) throws ShortenLinkExistsException {
-        if (urlRepository.findByShortUrl(this.baseUrl+key) != null) {
+        Url resUrl = urlRepository.findByShortUrl(this.baseUrl+key);
+        if (resUrl != null) {
+            if (resUrl.getLongUrl().equals(url.getLongUrl())) {
+                return resUrl;
+            }
             throw new ShortenLinkExistsException();
         }
-        url.setShortUrl(baseUrl+key);
+        url.setShortUrl(this.baseUrl+key);
         return saveUrl(url);
     }
 
     public Url encodeUrl(Url longUrl) {
-        Url shortUrl = urlRepository.findByLongUrl(longUrl.getLongUrl());
-        if (shortUrl != null) {
-            return shortUrl;
+        Url keyUrl = urlRepository.findByLongUrl(longUrl.getLongUrl());
+        if (keyUrl != null) {
+            return keyUrl;
         }
 
         String key = hashing(longUrl.getLongUrl()).substring(0,7);
@@ -60,11 +67,14 @@ public class UrlService {
             key = hashing(key + salt);
         }
         longUrl.setShortUrl(this.baseUrl+key);
-        System.out.println(longUrl);
         return saveUrl(longUrl);
     }
 
-    public Url decodeUrl(String shortUrl) {
-        return urlRepository.findByShortUrl(shortUrl);
+    public Url decodeUrl(String key) throws LongUrlDoesNotExistsException {
+        Url url = urlRepository.findByShortUrl(this.baseUrl+key);
+        if (url == null) {
+            throw new LongUrlDoesNotExistsException();
+        }
+        return url;
     }
 }
