@@ -1,24 +1,19 @@
 package com.frances.relink.service;
 
 import com.frances.relink.data.UrlRepository;
-import com.frances.relink.exception.InvalidUrl;
+import com.frances.relink.exception.InvalidUrlException;
 import com.frances.relink.exception.LongUrlDoesNotExistsException;
 import com.frances.relink.exception.ShortenLinkExistsException;
 import com.frances.relink.models.Url;
 import org.apache.commons.validator.UrlValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
-import java.net.MalformedURLException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
 
 @Service
 @Cacheable("urls")
@@ -66,10 +61,10 @@ public class UrlService {
         return saveUrl(url);
     }
 
-    public Url encodeUrl(Url longUrl) throws InvalidUrl {
+    public Url encodeUrl(Url longUrl) throws InvalidUrlException {
         UrlValidator validator = new UrlValidator();
         if (!validator.isValid(longUrl.getLongUrl())) {
-            throw new InvalidUrl();
+            throw new InvalidUrlException();
         }
 
         Url keyUrl = urlRepository.findByLongUrl(longUrl.getLongUrl());
