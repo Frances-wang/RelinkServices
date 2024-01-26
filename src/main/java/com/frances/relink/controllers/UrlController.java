@@ -22,12 +22,7 @@ public class UrlController {
         this.urlService = urlService;
     }
 
-    // short to long
-//    @GetMapping("/short")
-//    public Url getUrl(@RequestParam String shortUrl) {
-//        return urlService.decodeUrl(shortUrl);
-//    }
-
+    // redirect
     @GetMapping("/{shortUrlKey}")
     public void redirectUrl(HttpServletResponse response, @PathVariable String shortUrlKey) {
         String[] parts = shortUrlKey.split("/");
@@ -44,7 +39,7 @@ public class UrlController {
 
     // long to short
     @PostMapping("/longUrl")
-    public Url saveUrl(@RequestBody Url longUrl, @RequestParam(name="key", required = false) String key) throws MalformedURLException {
+    public Url saveUrl(@RequestBody Url longUrl, @RequestParam(name="key", required = false) String key) {
         if (key != null) {
             try {
                 return urlService.saveUrl(longUrl, key);
@@ -61,5 +56,4 @@ public class UrlController {
             }
         }
     }
-
 }
