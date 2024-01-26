@@ -1,5 +1,6 @@
 package com.frances.relink.controllers;
 
+import com.frances.relink.exception.InvalidUrl;
 import com.frances.relink.exception.LongUrlDoesNotExistsException;
 import com.frances.relink.exception.ShortenLinkExistsException;
 import com.frances.relink.models.Url;
@@ -9,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 @RestController
+@RequestMapping("/re.link")
 public class UrlController {
     private final UrlService urlService;
 
@@ -41,7 +44,7 @@ public class UrlController {
 
     // long to short
     @PostMapping("/longUrl")
-    public Url saveUrl(@RequestBody Url longUrl, @RequestParam(name="key", required = false) String key) {
+    public Url saveUrl(@RequestBody Url longUrl, @RequestParam(name="key", required = false) String key) throws MalformedURLException {
         if (key != null) {
             try {
                 return urlService.saveUrl(longUrl, key);
@@ -50,7 +53,12 @@ public class UrlController {
                 return null;
             }
         } else {
-            return urlService.encodeUrl(longUrl);
+            try {
+                return urlService.encodeUrl(longUrl);
+            } catch (InvalidUrl e){
+                System.out.println("The url is not valid.");
+                return null;
+            }
         }
     }
 

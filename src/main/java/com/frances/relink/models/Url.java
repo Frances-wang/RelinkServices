@@ -8,13 +8,15 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
+import java.io.Serializable;
+
 @Entity
 @Data
 @NoArgsConstructor
 @Table(name="URL")
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class Url {
+public class Url implements Serializable {
 
     @jakarta.persistence.Id
     @Id
