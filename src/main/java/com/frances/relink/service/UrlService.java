@@ -1,19 +1,24 @@
 package com.frances.relink.service;
 
 import com.frances.relink.data.UrlRepository;
+import com.frances.relink.exception.InvalidUrlException;
 import com.frances.relink.exception.LongUrlDoesNotExistsException;
 import com.frances.relink.exception.ShortenLinkExistsException;
 import com.frances.relink.models.Url;
-import org.springframework.cache.annotation.CachePut;
+import org.apache.commons.validator.UrlValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
 
 @Service
+@Cacheable("urls")
 public class UrlService {
+    private static final Logger logger = LoggerFactory.getLogger(UrlService.class);
     private final UrlRepository urlRepository;
     private final String baseUrl;
     private final String salt;
@@ -56,7 +61,12 @@ public class UrlService {
         return saveUrl(url);
     }
 
-    public Url encodeUrl(Url longUrl) {
+    public Url encodeUrl(Url longUrl) throws InvalidUrlException {
+        UrlValidator validator = new UrlValidator();
+        if (!validator.isValid(longUrl.getLongUrl())) {
+            throw new InvalidUrlException();
+        }
+
         Url keyUrl = urlRepository.findByLongUrl(longUrl.getLongUrl());
         if (keyUrl != null) {
             return keyUrl;
@@ -70,11 +80,15 @@ public class UrlService {
         return saveUrl(longUrl);
     }
 
+    @Cacheable(value = "urlsCache", key = "#key")
     public Url decodeUrl(String key) throws LongUrlDoesNotExistsException {
+        logger.info("Fail to get Url with key {} from cache...", key);
         Url url = urlRepository.findByShortUrl(this.baseUrl+key);
         if (url == null) {
+            logger.info("Url with key {} not found in the repository.", key);
             throw new LongUrlDoesNotExistsException();
         }
+        logger.info("Url with key {} retrieved from the repository.", key);
         return url;
     }
 }

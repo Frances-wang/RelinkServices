@@ -1,5 +1,6 @@
 package com.frances.relink.controllers;
 
+import com.frances.relink.exception.InvalidUrlException;
 import com.frances.relink.exception.LongUrlDoesNotExistsException;
 import com.frances.relink.exception.ShortenLinkExistsException;
 import com.frances.relink.models.Url;
@@ -7,10 +8,10 @@ import com.frances.relink.service.UrlService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
 
 @RestController
+@RequestMapping("/re.link")
 public class UrlController {
     private final UrlService urlService;
 
@@ -19,12 +20,7 @@ public class UrlController {
         this.urlService = urlService;
     }
 
-    // short to long
-//    @GetMapping("/short")
-//    public Url getUrl(@RequestParam String shortUrl) {
-//        return urlService.decodeUrl(shortUrl);
-//    }
-
+    // redirect
     @GetMapping("/{shortUrlKey}")
     public void redirectUrl(HttpServletResponse response, @PathVariable String shortUrlKey) {
         String[] parts = shortUrlKey.split("/");
@@ -41,17 +37,11 @@ public class UrlController {
 
     // long to short
     @PostMapping("/longUrl")
-    public Url saveUrl(@RequestBody Url longUrl, @RequestParam(name="key", required = false) String key) {
+    public Url saveUrl(@RequestBody Url longUrl, @RequestParam(name="key", required = false) String key) throws ShortenLinkExistsException, InvalidUrlException {
         if (key != null) {
-            try {
-                return urlService.saveUrl(longUrl, key);
-            } catch (ShortenLinkExistsException e) {
-                System.out.println("The custom link is already used, please pick another one.");
-                return null;
-            }
+            return urlService.saveUrl(longUrl, key);
         } else {
             return urlService.encodeUrl(longUrl);
         }
     }
-
 }
